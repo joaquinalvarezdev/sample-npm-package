@@ -28,19 +28,19 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
 
-          - name: Determine Next Pre-release Version
-          id: prerelease-version
-          run: |
-            CURRENT_VERSION=$(npm view . version)
-            PREFIX="${CURRENT_VERSION}-pre."
-            LATEST_PRE=$(npm view . versions --json | jq -r '.[] | select(startswith("'"$PREFIX"'"))' | sort -V | tail -n1)
-            if [ -z "$LATEST_PRE" ]; then
-              NEXT_PRE_VERSION="${CURRENT_VERSION}-pre.1"
-            else
-              NEXT_PRE_VERSION=$(echo $LATEST_PRE | awk -F. '{print $1"."$2"."$3"-pre."$4+1}')
-            fi
-            echo "NEXT_PRE_VERSION=$NEXT_PRE_VERSION" >> $GITHUB_ENV
-            echo "::set-output name=version::$NEXT_PRE_VERSION"
+      - name: Determine Next Pre-release Version
+        id: prerelease-version
+        run: |
+          CURRENT_VERSION=$(npm view . version)
+          PREFIX="${CURRENT_VERSION}-pre."
+          LATEST_PRE=$(npm view . versions --json | jq -r '.[] | select(startswith("'"$PREFIX"'"))' | sort -V | tail -n1)
+          if [ -z "$LATEST_PRE" ]; then
+            NEXT_PRE_VERSION="${CURRENT_VERSION}-pre.1"
+          else
+            NEXT_PRE_VERSION=$(echo $LATEST_PRE | awk -F. '{print $1"."$2"."$3"-pre."$4+1}')
+          fi
+          echo "NEXT_PRE_VERSION=$NEXT_PRE_VERSION" >> $GITHUB_ENV
+          echo "::set-output name=version::$NEXT_PRE_VERSION"
 
       - name: Publish to npm
         run: npm version ${{ steps.prerelease-version.outputs.version }} && npm publish --tag next
