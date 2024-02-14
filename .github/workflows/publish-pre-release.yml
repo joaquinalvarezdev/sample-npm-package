@@ -2,6 +2,10 @@ name: Publish Pre Release
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: "The version to publish on the form of x.x.x-pre.x"
+        required: true
 
 jobs:
   build:
@@ -23,41 +27,7 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Set Git Config
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-
-      - name: Determine Next Pre-release Version
-        id: prerelease-version
-        run: |
-          # Get the latest and next version tags
-          DIST_TAGS=$(npm view . dist-tags --json)
-          LATEST_VERSION=$(echo $DIST_TAGS | jq -r '.latest')
-          NEXT_VERSION=$(echo $DIST_TAGS | jq -r '.next')
-
-          # Extract the base version and pre-release number from the next version
-          NEXT_BASE_VERSION=$(echo $NEXT_VERSION | awk -F "-pre." '{print $1}')
-          NEXT_PRE_NUM=$(echo $NEXT_VERSION | awk -F "-pre." '{print $2}')
-
-          if [ "$LATEST_VERSION" = "$NEXT_BASE_VERSION" ]; then
-              # If latest and next versions have the same base, increment the base version
-              # Split the version into array based on '.'
-              IFS='.' read -r -a version_parts <<< "$LATEST_VERSION"
-              # Increment the minor version (1.0.2 -> 1.0.3)
-              version_parts[1]=$((version_parts[1]+1))
-              # Join the version parts back together
-              NEXT_BASE_VERSION="${version_parts[0]}.${version_parts[1]}.${version_parts[2]}"
-              NEXT_PRE_VERSION="${NEXT_BASE_VERSION}-pre.1"
-          else
-              # If the base versions are different, increment the pre-release number
-              NEXT_PRE_VERSION="${NEXT_BASE_VERSION}-pre.$((NEXT_PRE_NUM+1))"
-          fi
-
-          echo "NEXT_PRE_VERSION=$NEXT_PRE_VERSION" >> $GITHUB_ENV
-          echo "::set-output name=version::$NEXT_PRE_VERSION"
-
       - name: Publish to npm
-        run: npm version ${{ steps.prerelease-version.outputs.version }} && npm publish --tag next
+        run: npm version ${{ inputs.version }} && npm publish --tag next
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
