@@ -33,7 +33,7 @@ jobs:
         run: |
           CURRENT_VERSION=$(npm view . version)
           # Extract only the numeric part of the pre-release version
-          LATEST_PRE=$(npm view . versions --json | jq -r '.[] | select(test("'"$CURRENT_VERSION-pre"'\d+$'))' | sort -V | tail -n1)
+          LATEST_PRE=$(npm view . versions --json | jq -r --arg v "$CURRENT_VERSION-pre" '.[] | select(test($v + "\\d+$"))' | sort -V | tail -n1)
           if [ -z "$LATEST_PRE" ]; then
             NEXT_PRE_VERSION="${CURRENT_VERSION}-pre.1"
           else
